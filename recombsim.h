@@ -1,5 +1,7 @@
+#include <string>
+
 class Recombsim {
 public:
-	Recombsim();
-	static char which_base(double rnd);
+	Recombsim() {};
+	static std::string which_base(double rnd);
 };
