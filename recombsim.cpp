@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
 	recomb_t recomb2 = { 60000, 8000 };
 	recomb_t recomb3 = { 100000, 16000 };
 
-	Sequence *seq0 = new BasicSequence("Ancestral Seq", "A", &AlphabetTools::DNA_ALPHABET);
-	Sequence *seq1 = new BasicSequence("Recombination block 1", "A", &AlphabetTools::DNA_ALPHABET);
-	Sequence *seq2 = new BasicSequence("Recombination block 2", "A", &AlphabetTools::DNA_ALPHABET);
-	Sequence *seq3 = new BasicSequence("Recombination block 3", "A", &AlphabetTools::DNA_ALPHABET);
+	Sequence *seq0 = new BasicSequence("ANCESTR", "A", &AlphabetTools::DNA_ALPHABET);
+	Sequence *seq1 = new BasicSequence("RECOMB1", "A", &AlphabetTools::DNA_ALPHABET);
+	Sequence *seq2 = new BasicSequence("RECOMB2", "A", &AlphabetTools::DNA_ALPHABET);
+	Sequence *seq3 = new BasicSequence("RECOMB3", "A", &AlphabetTools::DNA_ALPHABET);
 	
 	for (i = 0; i <= MAX_GENOME; i++) {
 		dblrand = twister();
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 	int j;
 
 	Sequence *seq = seq0->clone();
-	seq->setName("Recombinant without mutations");
+	seq->setName("MUT0");
 
 	for (j = 0; j < recomb1.length; j++) {
 		seq->setElement(recomb1.start + j, seq1->getChar(j));
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 	char label[64] = {0};
 	for (j = 1; j <= 100; j++) {
 		Sequence *seq = seq0->clone();
-		sprintf(label, "Recombinant with %d%% mutations",j);
+		sprintf(label, "MUT%d",j);
 		seq->setName(label);
 		for (i = 0; i < j*MAX_GENOME/100; i++) {
 			pos = (int) (MAX_GENOME*twister());
