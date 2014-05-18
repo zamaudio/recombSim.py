@@ -37,6 +37,9 @@ using namespace bpp;
 
 #define MAX_GENOME 250000
 
+#define MAX_MUTATION_PERCENT 25
+#define MAX_STEPS 50
+
 typedef struct recomb {
 	int start;
 	int length;
@@ -57,7 +60,7 @@ string Recombsim::which_base(double rnd) {
 int main(int argc, char** argv) {
 	
 	int i;
-	int seed = 42;
+	int seed = 43;
 	double dblrand = 0.0;
 	MTRand53 twister(seed);
 	MTRand irand(seed);
@@ -113,11 +116,11 @@ int main(int argc, char** argv) {
 	int pos;
 	string snp;
 	char label[64] = {0};
-	for (j = 1; j <= 100; j++) {
+	for (j = 1; j <= MAX_STEPS; j++) {
 		Sequence *seq = seq0->clone();
-		sprintf(label, "MUT%d",j);
+		sprintf(label, "MUT%d_%d", MAX_MUTATION_PERCENT, j);
 		seq->setName(label);
-		for (i = 0; i < j*MAX_GENOME/100; i++) {
+		for (i = 0; i < j*MAX_GENOME*MAX_MUTATION_PERCENT/MAX_STEPS/100; i++) {
 			pos = (int) (MAX_GENOME*twister());
 			snp = Recombsim::which_base(twister());
 			seq->setElement(pos, snp);
@@ -128,8 +131,8 @@ int main(int argc, char** argv) {
 	}
 
 	Fasta fasWriter;
-	fasWriter.writeSequences(string("simdata.mfasta"), *mfasta, true);
-	fasWriter.writeSequences(string("simref.fasta"), *reference, true);
+	fasWriter.writeSequences(string("sim25_50_250000.mfasta"), *mfasta, true);
+	fasWriter.writeSequences(string("sim25_50_250000_ref.fasta"), *reference, true);
 
 	delete seq0;
 	delete seq1;
