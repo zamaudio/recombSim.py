@@ -14,6 +14,10 @@ detecting homologous recombination events by checking if the results match the
 original regions of inserted recombinant subsequences.
 
 Dependencies:
-	Bio++ (libbpp-core, libbpp-seq) found here: http://biopp.univ-montp2.fr/
-	A C++ compiler
+	
+	- Bio++ (libbpp-core, libbpp-seq) found here: http://biopp.univ-montp2.fr/
 
+	- A C++ compiler
+
+
+The pseudo random number generator used to randomise the sequence  is Mersenne Twister.
