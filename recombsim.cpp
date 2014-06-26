@@ -17,6 +17,8 @@
  */
 
 #include <cstdio>
+#include <time.h>
+#include <unistd.h>
 #include "recombsim.h"
 #include "mtrand.h"
 
@@ -30,15 +32,10 @@ using namespace std;
 
 using namespace bpp;
 
-#define FREQ_A 0.33
-#define FREQ_C 0.17
-#define FREQ_G 0.17
-#define FREQ_T 0.33
-
-#define MAX_GENOME 250000
-
-#define MAX_MUTATION_PERCENT 25
-#define MAX_STEPS 50
+#define FREQ_A 0.30266
+#define FREQ_C 0.19811
+#define FREQ_G 0.19718
+#define FREQ_T 0.30205
 
 typedef struct recomb {
 	int start;
@@ -57,38 +54,58 @@ string Recombsim::which_base(double rnd) {
 	}
 }
 
-int main(int argc, char** argv) {
-	
+int main(int argc, char *argv[])
+{
+	int opt;
+	int tfnd;
+	int genomelen = 0;
+	float maxmut = 0;
+	int maxsteps = 0;
+
+	tfnd = 0;
+	while ((opt = getopt(argc, argv, "g:m:s:")) != -1) {
+		switch (opt) {
+		case 'g':
+			genomelen = atoi(optarg);
+			tfnd = 1;
+			break;
+		case 'm':
+			maxmut = atof(optarg);
+			tfnd = 1;
+			break;
+		case 's':
+			maxsteps = atoi(optarg);
+			tfnd = 1;
+			break;
+		default: /* '?' */
+			fprintf(stderr, "Usage: %s [-g genomelen] [-m maxmutation%] [-s maxsteps]\n", argv[0]);
+			exit(-1);
+		}
+	}
+
+	if (optind > argc) {
+		fprintf(stderr, "Usage: %s [-g genomelen] [-m maxmutation%] [-s maxsteps]\n", argv[0]);
+		exit(-1);
+	}
+
 	int i;
-	int seed = 43;
+	int seed = time(NULL);
 	double dblrand = 0.0;
 	MTRand53 twister(seed);
 	MTRand irand(seed);
 
-	recomb_t recomb1 = { 20000, 1000 };
-	recomb_t recomb2 = { 60000, 8000 };
-	recomb_t recomb3 = { 100000, 16000 };
+	recomb_t recomb1 = { 4000, 2000 };
 
 	Sequence *seq0 = new BasicSequence("ANCESTR", "A", &AlphabetTools::DNA_ALPHABET);
 	Sequence *seq1 = new BasicSequence("RECOMB1", "A", &AlphabetTools::DNA_ALPHABET);
-	Sequence *seq2 = new BasicSequence("RECOMB2", "A", &AlphabetTools::DNA_ALPHABET);
-	Sequence *seq3 = new BasicSequence("RECOMB3", "A", &AlphabetTools::DNA_ALPHABET);
 	
-	for (i = 0; i <= MAX_GENOME; i++) {
+	for (i = 0; i <= genomelen; i++) {
 		dblrand = twister();
 		seq0->addElement(i, (Recombsim::which_base(dblrand)));
 	}
 	for (i = 0; i <= recomb1.length; i++) {
 		dblrand = twister();
 		seq1->addElement(i, (Recombsim::which_base(dblrand)));
-	}
-	for (i = 0; i <= recomb2.length; i++) {
-		dblrand = twister();
-		seq2->addElement(i, (Recombsim::which_base(dblrand)));
-	}
-	for (i = 0; i <= recomb3.length; i++) {
-		dblrand = twister();
-		seq3->addElement(i, (Recombsim::which_base(dblrand)));
 	}
 
 	VectorSequenceContainer* reference = new VectorSequenceContainer(&AlphabetTools::DNA_ALPHABET);
@@ -102,12 +119,6 @@ int main(int argc, char** argv) {
 	for (j = 0; j < recomb1.length; j++) {
 		seq->setElement(recomb1.start + j, seq1->getChar(j));
 	}
-	for (j = 0; j < recomb2.length; j++) {
-		seq->setElement(recomb2.start + j, seq2->getChar(j));
-	}
-	for (j = 0; j < recomb3.length; j++) {
-		seq->setElement(recomb3.start + j, seq3->getChar(j));
-	}
 	
 	VectorSequenceContainer* mfasta = new VectorSequenceContainer(&AlphabetTools::DNA_ALPHABET);
 	mfasta->addSequence(*seq);
@@ -116,12 +127,12 @@ int main(int argc, char** argv) {
 	int pos;
 	string snp;
 	char label[64] = {0};
-	for (j = 1; j <= MAX_STEPS; j++) {
+	for (j = 1; j <= maxsteps; j++) {
 		Sequence *seq = seq0->clone();
-		sprintf(label, "MUT%d_%d", MAX_MUTATION_PERCENT, j);
+		sprintf(label, "MUT%.2f_%d", maxmut, j);
 		seq->setName(label);
-		for (i = 0; i < j*MAX_GENOME*MAX_MUTATION_PERCENT/MAX_STEPS/100; i++) {
-			pos = (int) (MAX_GENOME*twister());
+		for (i = 0; i < j*genomelen*maxmut/maxsteps/100; i++) {
+			pos = (int) (genomelen*twister());
 			snp = Recombsim::which_base(twister());
 			seq->setElement(pos, snp);
 			//printf("pos=%d snp=%s\n",pos,snp.c_str());
@@ -131,13 +142,16 @@ int main(int argc, char** argv) {
 	}
 
 	Fasta fasWriter;
-	fasWriter.writeSequences(string("sim25_50_250000.mfasta"), *mfasta, true);
-	fasWriter.writeSequences(string("sim25_50_250000_ref.fasta"), *reference, true);
+	char file1[64];
+	char file2[64];
+	sprintf(file1, "sim.mfasta", maxmut, maxsteps, genomelen);
+	sprintf(file2, "sim_ref.fasta", maxmut, maxsteps, genomelen);
+
+	fasWriter.writeSequences(string(file1), *mfasta, true);
+	fasWriter.writeSequences(string(file2), *reference, true);
 
 	delete seq0;
 	delete seq1;
-	delete seq2;
-	delete seq3;
 	printf("Dumped simulated sequences to output files\n");
 	return 0;
 }
