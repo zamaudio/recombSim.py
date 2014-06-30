@@ -130,9 +130,9 @@ int main(int argc, char *argv[])
 	char label[64] = {0};
 	for (j = 1; j <= maxsteps; j++) {
 		Sequence *seq = seq0->clone();
-		sprintf(label, "MUT_%d", maxmut, j);
+		sprintf(label, "MUT_%d", j);
 		seq->setName(label);
-		for (i = 0; i < j*genomelen*maxmut/maxsteps/100; i++) {
+		for (i = 0; i < maxsteps; i++) {
 			pos = (int) (genomelen*twister());
 			snp = Recombsim::which_base(twister());
 			seq->setElement(pos, snp);
@@ -145,8 +145,8 @@ int main(int argc, char *argv[])
 	Fasta fasWriter;
 	char file1[64];
 	char file2[64];
-	sprintf(file1, "sim.mfasta", maxmut, maxsteps, genomelen);
-	sprintf(file2, "sim_ref.fasta", maxmut, maxsteps, genomelen);
+	sprintf(file1, "sim.mfasta");
+	sprintf(file2, "sim_ref.fasta");
 
 	fasWriter.writeSequences(string(file1), *mfasta, true);
 	fasWriter.writeSequences(string(file2), *reference, true);
