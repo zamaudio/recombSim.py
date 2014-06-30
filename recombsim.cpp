@@ -114,13 +114,14 @@ int main(int argc, char *argv[])
 	int j;
 
 	Sequence *seq = seq0->clone();
-	seq->setName("MUT0");
+	seq->setName("RECOMB");
 
 	for (j = 0; j < recomb1.length; j++) {
 		seq->setElement(recomb1.start + j, seq1->getChar(j));
 	}
 	
 	VectorSequenceContainer* mfasta = new VectorSequenceContainer(&AlphabetTools::DNA_ALPHABET);
+	mfasta->addSequence(*seq0);
 	mfasta->addSequence(*seq);
 	delete seq;
 
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
 	char label[64] = {0};
 	for (j = 1; j <= maxsteps; j++) {
 		Sequence *seq = seq0->clone();
-		sprintf(label, "MUT%.2f_%d", maxmut, j);
+		sprintf(label, "MUT_%d", maxmut, j);
 		seq->setName(label);
 		for (i = 0; i < j*genomelen*maxmut/maxsteps/100; i++) {
 			pos = (int) (genomelen*twister());
