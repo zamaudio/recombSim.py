@@ -12,6 +12,7 @@ do
 		mkdir ${rep}
 		cd ${rep}
 		recombsim -g ${GENOMESIZE} -m ${maxmut} -s ${STEPS}
+		sleep 1
 		cd ..
 	done
 	cd ..
