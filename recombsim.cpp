@@ -78,13 +78,13 @@ int main(int argc, char *argv[])
 			tfnd = 1;
 			break;
 		default: /* '?' */
-			fprintf(stderr, "Usage: %s [-g genomelen] [-m maxmutation%] [-s maxsteps]\n", argv[0]);
+			fprintf(stderr, "Usage: %s [-g genomelen] [-m mutationscale] [-s maxsteps]\n", argv[0]);
 			exit(-1);
 		}
 	}
 
 	if (optind > argc) {
-		fprintf(stderr, "Usage: %s [-g genomelen] [-m maxmutation%] [-s maxsteps]\n", argv[0]);
+		fprintf(stderr, "Usage: %s [-g genomelen] [-m mutationscale] [-s maxsteps]\n", argv[0]);
 		exit(-1);
 	}
 
@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
 	MTRand irand(seed);
 
 	recomb_t recomb1 = { 4000, 2000 };
+	//recomb_t recomb1 = { 4, 5 };
 
 	Sequence *seq0 = new BasicSequence("ANCESTR", "A", &AlphabetTools::DNA_ALPHABET);
 	Sequence *seq1 = new BasicSequence("RECOMB1", "A", &AlphabetTools::DNA_ALPHABET);
@@ -113,26 +114,25 @@ int main(int argc, char *argv[])
 
 	int j;
 
-	Sequence *seq = seq0->clone();
-	seq->setName("RECOMB");
+	Sequence *seq2 = seq0->clone();
+	seq2->setName("RECOMB");
 
 	for (j = 0; j < recomb1.length; j++) {
-		seq->setElement(recomb1.start + j, seq1->getChar(j));
+		seq2->setElement(recomb1.start + j, seq1->getChar(j));
 	}
 	
 	VectorSequenceContainer* mfasta = new VectorSequenceContainer(&AlphabetTools::DNA_ALPHABET);
 	mfasta->addSequence(*seq0);
-	mfasta->addSequence(*seq);
-	delete seq;
+	mfasta->addSequence(*seq2);
 
 	int pos;
 	string snp;
 	char label[64] = {0};
 	for (j = 1; j <= maxsteps; j++) {
-		Sequence *seq = seq0->clone();
+		Sequence *seq = seq2->clone();
 		sprintf(label, "MUT_%d", j);
 		seq->setName(label);
-		for (i = 0; i < maxsteps; i++) {
+		for (i = 0; i < j*maxmut; i=i+maxmut) {
 			pos = (int) (genomelen*twister());
 			snp = Recombsim::which_base(twister());
 			seq->setElement(pos, snp);
@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 
 	delete seq0;
 	delete seq1;
+	delete seq2;
 	printf("Dumped simulated sequences to output files\n");
 	return 0;
 }
