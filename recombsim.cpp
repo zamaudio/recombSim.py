@@ -128,19 +128,19 @@ int main(int argc, char *argv[])
 	int pos;
 	string snp;
 	char label[64] = {0};
+	Sequence *seqtmp = seq2->clone();
 	for (j = 1; j <= maxsteps; j++) {
-		Sequence *seq = seq2->clone();
 		sprintf(label, "MUT_%d", j);
-		seq->setName(label);
-		for (i = 0; i < j*maxmut; i=i+maxmut) {
+		seqtmp->setName(label);
+		for (i = 0; i < maxmut; i=i+maxmut) {
 			pos = (int) (genomelen*twister());
 			snp = Recombsim::which_base(twister());
-			seq->setElement(pos, snp);
+			seqtmp->setElement(pos, snp);
 			//printf("pos=%d snp=%s\n",pos,snp.c_str());
 		}
-		mfasta->addSequence(*seq);
-		delete seq;
+		mfasta->addSequence(*seqtmp);
 	}
+	delete seqtmp;
 
 	Fasta fasWriter;
 	char file1[64];
