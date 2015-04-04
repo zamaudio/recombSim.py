@@ -9,5 +9,5 @@ mutations.
 Tree
 ----
 
-![screenshot](https://raw.github.com/zamaudio/recombsim/py-script/treesim.svg "Simulated tree")
+![screenshot](https://raw.github.com/zamaudio/recombsim/py-script/treesim.png "Simulated tree")
 
