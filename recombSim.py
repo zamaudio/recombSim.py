@@ -80,19 +80,23 @@ if __name__ == "__main__":
                 output_handle.close()
                 cleanFasta(output_fasta)
 
-        def cloneFasta(input_fasta, output_fasta):
-                os.system("".join(["cp ", input_fasta, " ", output_fasta]))
-
         def cleanFastas(files):
                 for f in files:
                     cleanFasta(f)
 
         def cleanFasta(filename):
-                os.system("".join(["tail -n+2 ", filename, " > tmp"]))
+                os.system("".join(["cat ", filename, " | awk '/>/{printf \"\\n%s\\n\", $0;next}{printf $1;next}' | awk NF > tmp"]))
+                os.system("".join(["mv tmp ", filename]))
+
+        def renameFastas(files):
+                for f in files:
+                    renameFasta(f)
+
+        def renameFasta(filename):
+                os.system("".join(["tail -n+2 ", filename, " > tmp4"]))
                 os.system("".join(["echo '>", filename, "' > ", filename]))
-                os.system("".join(["tr -d '\\n' < tmp >> ", filename]))
-                os.system("".join(["echo '' >> ", filename]))
-                os.system("".join(["rm -f tmp "]))
+                os.system("".join(["cat tmp4 >> ", filename])) 
+                os.system("".join(["rm -f tmp4"]))
 
         def subsetFasta(input_fasta, start, output_fasta):
                 alignment = SeqIO.read(input_fasta, "fasta")
@@ -106,24 +110,30 @@ if __name__ == "__main__":
         def mutateRecomb(input_fasta, globlength):
                 #mutrate = float(options.lenrecomb) * float(options.divergence) / (100 * globlength)
                 #mutrate = 1000 * float(options.divergence) / (2000 * float(options.lenrecomb))
-                mutrate = float(options.divergence) / 2000
-                runNetRecodon(mutrate, input_fasta, input_fasta)
+                mutrate = float(options.divergence) / 2000 
+                runNetRecodon(mutrate, input_fasta, input_fasta, "tmp3")
+                os.system("rm tmp3")
 
-	def runNetRecodon(mut, input_fasta, output_fasta):
+
+	def runNetRecodon(mutrate, input_fasta, output1_fasta, output2_fasta):
                 genomelength = float(getFastaLength(input_fasta))
-                os.system("".join(["cat ", input_fasta, "|tail -n+2 > seqGMRCA2"]))
-                os.system("cat seqGMRCA2 | tr -d '\\n' > seqGMRCA")
-                os.system("".join(["NetRecodon6.0.0 -n1 -s2 -l", str(genomelength), " -e1000 -_1 -r0 -u", str(mut), " -f4 0.3731 0.1346 0.2110 0.2813 -v1.1588 3.6558 0.6834 0.4268 7.1333 1.0000 -a1.3381 -xseqGMRCA -*2 -y2 -#", options.seed])) #, " > /dev/null 2>&1"]))
-                os.system("".join(["cat Results/sequences |tail -n+3 > ", output_fasta]))
+                cleanFasta(input_fasta)
+                os.system("".join(["cat ", input_fasta, " | tail -n+2 | head -n1 > seqGMRCA"]))
+                os.system("".join(["NetRecodon6.0.0 -n1 -s2 -l", str(genomelength), " -e1000 -_1 -r0 -u", str(mutrate), " -f4 0.3731 0.1346 0.2110 0.2813 -v1.1588 3.6558 0.6834 0.4268 7.1333 1.0000 -a1.3381 -xseqGMRCA -*2 -y2 -#", options.seed])) #," > /dev/null 2>&1"]))
+                seed = int(options.seed) + 1 
+                options.seed = str(seed)
+                os.system("cp Results/sequences tmp2")
                 os.system("rm -fr Results")
                 os.system("rm seqGMRCA")
-                os.system("rm seqGMRCA2")
-                cleanFasta(output_fasta)
+                cleanFasta("tmp2")
+                os.system("".join(["head -n2 tmp2 > ", output1_fasta]))
+                os.system("".join(["tail -n+3 tmp2 | head -n2 > ", output2_fasta]))
+                os.system("rm tmp2")
 
-        def forwardEvolve(input_fasta, output_fasta):
+        def forwardEvolve(input_fasta, output1_fasta, output2_fasta):
                 length = float(getFastaLength(input_fasta))
                 mut = 50 / (2000 * length)
-                runNetRecodon(mut, input_fasta, output_fasta)
+                runNetRecodon(mut, input_fasta, output1_fasta, output2_fasta)
 
 	#### MAIN PROGRAM
 	
@@ -158,34 +168,29 @@ if __name__ == "__main__":
                 ThrowError("Length of recombinations must not exceed 1/10 of whole sample")
         
         a = globlength / 20
-        pos = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
-        pos = a*pos
+        pos = [1, 5, 9, 13, 17]
+        for i in range(0, 5):
+            pos[i] = a * pos[i]
+
+        print pos
 
         ancseq0 = options.inputfasta
-        forwardEvolve(ancseq0, seq11)
-        cloneFasta(seq11, seq12)
-        forwardEvolve(seq11, seq211)
-        forwardEvolve(seq12, seq221)
+        forwardEvolve(ancseq0, seq11, seq12)
+        forwardEvolve(seq11, seq211, seq212)
+        forwardEvolve(seq12, seq221, seq222)
         for i in range(0, int(options.nrecomb)):
             subsetFasta(seq221, pos[i], chunk)
             mutateRecomb(chunk, globlength)
             replaceChunkFasta(chunk, pos[i], seq211)
         
-        cloneFasta(seq211, seq212)
-        cloneFasta(seq221, seq222)
-        forwardEvolve(seq211, seq3111)
-        forwardEvolve(seq212, seq3121)
-        forwardEvolve(seq221, seq3211)
-        forwardEvolve(seq222, seq3221)
-        for i in range(0, int(options.nrecomb)):
+        forwardEvolve(seq211, seq3111, seq3112)
+        forwardEvolve(seq212, seq3121, seq3122)
+        forwardEvolve(seq221, seq3211, seq3212)
+        forwardEvolve(seq222, seq3221, seq3222)
+        for i in range(int(options.nrecomb), 0):
             subsetFasta(seq3121, pos[i], chunk)
             mutateRecomb(chunk, globlength)
             replaceChunkFasta(chunk, pos[i], seq3211)
-
-        cloneFasta(seq3111, seq3112)
-        cloneFasta(seq3121, seq3122)
-        cloneFasta(seq3211, seq3212)
-        cloneFasta(seq3221, seq3222)
 
         cleanFastas([
             ancseq0,
@@ -204,7 +209,25 @@ if __name__ == "__main__":
             seq3221,
             seq3222
             ])
-        
+
+        renameFastas([
+            ancseq0,
+            seq11,
+            seq12,
+            seq211,
+            seq212,
+            seq221,
+            seq222,
+            seq3111,
+            seq3112,
+            seq3121,
+            seq3122,
+            seq3211,
+            seq3212,
+            seq3221,
+            seq3222
+            ])
+
         mergeFastas([
             ancseq0, 
             seq11, 
